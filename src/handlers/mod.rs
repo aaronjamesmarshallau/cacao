@@ -17,7 +17,7 @@ const URL_EXPIRATION_MINUTES: u64 = 5;
 ///
 /// ```
 /// let region = "ap-southeast-2".parse().expect("Region must be valid.");
-/// let creds = StaticProvider::new_minimial("test", "test").credentials().await.unwrap();
+/// let creds = StaticProvider::new_minimal("test", "test").credentials().await.unwrap();
 /// let filter = warp::path!("/my/path")
 /// 	.and(warp::post())
 /// 	.and_then(handlers::create_signed_url("my_bucket_name", region, creds));
