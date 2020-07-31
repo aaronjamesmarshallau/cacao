@@ -15,7 +15,7 @@ use crate::handlers;
 ///
 /// ```
 /// let region = "ap-southeast-2".parse().expect("Region must be valid.");
-/// let creds = StaticProvider::new_minimial("test", "test").credentials().await.unwrap();
+/// let creds = StaticProvider::new_minimal("test", "test").credentials().await.unwrap();
 /// let filter = crate::filters::signed_urls("test", region, credentials);
 ///
 /// warp::serve(filter).run(([0, 0, 0, 0], 8000)).await;
