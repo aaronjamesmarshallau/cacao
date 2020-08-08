@@ -15,9 +15,7 @@ then
     exit 1
 fi
 
-action="updated"
-
-echo "Ensuring stack $stackname exists and is up to date..."
+echo "🚀 Ensuring stack $stackname exists and is up to date..."
 error="$(aws cloudformation deploy --stack-name $stackname --template-body file://./bucket.yml --parameters ParameterKey=BucketName,ParameterValue=$bucketname ParameterKey=Environment,ParameterValue=$environment 2>&1)"
 
 # Check the previous commands exit code using `$?`
@@ -25,7 +23,7 @@ if [ $? -ne 0 ]
 then
     # If not 0, grep and print the error message and exit
     errorMessage="$(echo "$error" | grep -oP "An error occurred .*:\s\K(.*)")"
-    echo "$errorMessage"
+    echo "🔥 $errorMessage"
     exit 1
 fi
 
@@ -34,9 +32,10 @@ do
     echo -n "."
     sleep 3
 done
+echo "✅"
 
 echo ""
-echo "Stack $action successfully."
+echo "Stack deployed successfully."
 
 echo ""
 echo "Ensuring the bucket contains the latest version of the initial files..."
