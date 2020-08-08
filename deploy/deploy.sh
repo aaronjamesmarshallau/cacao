@@ -18,7 +18,7 @@ fi
 action="updated"
 
 echo "Ensuring stack $stackname exists and is up to date..."
-error="$(aws cloudformation update-stack --stack-name $stackname --template-body file://./bucket.yml --parameters ParameterKey=BucketName,ParameterValue=$bucketname ParameterKey=Environment,ParameterValue=$environment 2>&1)"
+error="$(aws cloudformation deploy --stack-name $stackname --template-body file://./bucket.yml --parameters ParameterKey=BucketName,ParameterValue=$bucketname ParameterKey=Environment,ParameterValue=$environment 2>&1)"
 
 # Check the previous commands exit code using `$?`
 if [ $? -ne 0 ]
@@ -38,8 +38,6 @@ done
 echo ""
 echo "Stack $action successfully."
 
-# Upload our index.html file if not uploaded
-if ! aws s3 ls s3://$bucketname | grep index.html
-then
-    aws s3 cp index.html s3://$bucketname/
-fi
+echo ""
+echo "Ensuring the bucket contains the latest version of the initial files..."
+aws s3 sync ./initial-bucket-contents/ s3://$bucketname/
