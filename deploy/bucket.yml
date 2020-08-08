@@ -1,0 +1,55 @@
+Parameters:
+  BucketName:
+    Description: The name of the the bucket to deploy
+    Type: String
+  Environment:
+    Description: The environment this is running in (development/staging/production)
+    Type: String
+    Default: development
+
+Resources:
+  TargetBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: PublicRead
+      BucketName: !Ref 'BucketName'
+      WebsiteConfiguration:
+        IndexDocument: index.html
+      CorsConfiguration:
+        CorsRules:
+          - Id: CacaoCorsRules
+            AllowedMethods:
+              - 'GET'
+              - 'HEAD'
+            AllowedOrigins:
+              - '*'
+      Tags:
+        - Key: environment
+          Value: !Ref Environment
+        - Key: application
+          Value: cacao
+  PublicAccessPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket:
+        Ref: "TargetBucket"
+      PolicyDocument:
+        Statement:
+          -
+            Action:
+              - "s3:GetObject"
+            Effect: "Allow"
+            Resource:
+              Fn::Join:
+                - ""
+                -
+                  - "arn:aws:s3:::"
+                  -
+                    Ref: "TargetBucket"
+                  - "/*"
+            Principal: "*"
+
+Outputs:
+  AssetUrl:
+    Value: !Join ['', ['https://', !GetAtt [TargetBucket, DomainName]]]
+    Description: The URL for the static asset host
