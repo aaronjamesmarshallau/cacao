@@ -15,29 +15,16 @@ then
     exit 1
 fi
 
-action="updated"
+echo "🚀 Ensuring stack $stackname exists and is up to date..."
+error="$(aws cloudformation deploy --stack-name $stackname --template-body file://./bucket.yml --parameters ParameterKey=BucketName,ParameterValue=$bucketname ParameterKey=Environment,ParameterValue=$environment 2>&1)"
 
-# If this returns an error, it's likely because our stack doesn't exist
-if ! aws cloudformation describe-stacks --stack-name $stackname > /dev/null
+# Check the previous commands exit code using `$?`
+if [ $? -ne 0 ]
 then
-    # Create stack if doesn't exist
-    echo "Creating stack $stackname..."
-    aws cloudformation create-stack --stack-name $stackname --template-body file://./bucket.yml --parameters ParameterKey=BucketName,ParameterValue=$bucketname ParameterKey=Environment,ParameterValue=$environment
-
-    action="created"
-else
-    # Update stack if does exist
-    echo "Updating stack $stackname..."
-    error="$(aws cloudformation update-stack --stack-name $stackname --template-body file://./bucket.yml --parameters ParameterKey=BucketName,ParameterValue=$bucketname ParameterKey=Environment,ParameterValue=$environment 2>&1)"
-
-    # Check the previous commands exit code using `$?`
-    if [ $? -ne 0 ]
-    then
-        # If not 0, grep and print the error message and exit
-        errorMessage="$(echo "$error" | grep -oP "An error occurred .*:\s\K(.*)")"
-        echo "$errorMessage"
-        exit 1
-    fi
+    # If not 0, grep and print the error message and exit
+    errorMessage="$(echo "$error" | grep -oP "An error occurred .*:\s\K(.*)")"
+    echo "🔥 $errorMessage"
+    exit 1
 fi
 
 while ! aws cloudformation describe-stacks --stack-name $stackname --query "Stacks[0].StackStatus" --output text | grep "_COMPLETE$" > /dev/null
@@ -45,12 +32,11 @@ do
     echo -n "."
     sleep 3
 done
+echo "✅"
 
 echo ""
-echo "Stack $action successfully."
+echo "Stack deployed successfully."
 
-# Upload our index.html file if not uploaded
-if ! aws s3 ls s3://$bucketname | grep index.html
-then
-    aws s3 cp index.html s3://$bucketname/
-fi
+echo ""
+echo "Ensuring the bucket contains the latest version of the initial files..."
+aws s3 sync ./initial-bucket-contents/ s3://$bucketname/
