@@ -17,27 +17,16 @@ fi
 
 action="updated"
 
-# If this returns an error, it's likely because our stack doesn't exist
-if ! aws cloudformation describe-stacks --stack-name $stackname > /dev/null
+echo "Ensuring stack $stackname exists and is up to date..."
+error="$(aws cloudformation update-stack --stack-name $stackname --template-body file://./bucket.yml --parameters ParameterKey=BucketName,ParameterValue=$bucketname ParameterKey=Environment,ParameterValue=$environment 2>&1)"
+
+# Check the previous commands exit code using `$?`
+if [ $? -ne 0 ]
 then
-    # Create stack if doesn't exist
-    echo "Creating stack $stackname..."
-    aws cloudformation create-stack --stack-name $stackname --template-body file://./bucket.yml --parameters ParameterKey=BucketName,ParameterValue=$bucketname ParameterKey=Environment,ParameterValue=$environment
-
-    action="created"
-else
-    # Update stack if does exist
-    echo "Updating stack $stackname..."
-    error="$(aws cloudformation update-stack --stack-name $stackname --template-body file://./bucket.yml --parameters ParameterKey=BucketName,ParameterValue=$bucketname ParameterKey=Environment,ParameterValue=$environment 2>&1)"
-
-    # Check the previous commands exit code using `$?`
-    if [ $? -ne 0 ]
-    then
-        # If not 0, grep and print the error message and exit
-        errorMessage="$(echo "$error" | grep -oP "An error occurred .*:\s\K(.*)")"
-        echo "$errorMessage"
-        exit 1
-    fi
+    # If not 0, grep and print the error message and exit
+    errorMessage="$(echo "$error" | grep -oP "An error occurred .*:\s\K(.*)")"
+    echo "$errorMessage"
+    exit 1
 fi
 
 while ! aws cloudformation describe-stacks --stack-name $stackname --query "Stacks[0].StackStatus" --output text | grep "_COMPLETE$" > /dev/null
